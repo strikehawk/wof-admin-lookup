@@ -56,7 +56,7 @@ tape('tests', (test) => {
 
     const resolver = proxyquire('../src/localPipResolver', {
       './pip/index': {
-        create: (datapath, layers, localizedAdminNames, callback) => {
+        create: (datapath, layers, localizedAdminNames, langKey, callback) => {
           t.equals(datapath, 'this is the datapath');
           t.deepEqual(layers, []);
           t.equals(localizedAdminNames, false);
@@ -119,7 +119,7 @@ tape('tests', (test) => {
 
     const resolver = proxyquire('../src/localPipResolver', {
       './pip/index': {
-        create: (datapath, layers, localizedAdminNames, callback) => {
+        create: (datapath, layers, localizedAdminNames, langKey, callback) => {
           t.equals(datapath, 'this is the datapath');
           t.deepEqual(layers, ['layer 1', 'layer 2']);
           t.equals(localizedAdminNames, false);
@@ -134,7 +134,7 @@ tape('tests', (test) => {
   test.test('createPipService returning error should throw exception', t => {
     const resolver = proxyquire('../src/localPipResolver', {
       './pip/index': {
-        create: (datapath, layers, localizedAdminNames, callback) => {
+        create: (datapath, layers, localizedAdminNames, langKey, callback) => {
           callback('this is a localPipResolver error');
         }
       }

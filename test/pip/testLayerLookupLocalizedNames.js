@@ -27,7 +27,7 @@ const layers = [
 ];
 
 function test(callback) {
-  createPIPService(config.imports.whosonfirst.datapath, layers, true, (err, pipService) => {
+  createPIPService(config.imports.whosonfirst.datapath, layers, true, 'eng', (err, pipService) => {
     const basePath = path.resolve(__dirname);
     const inputDataPath = path.join(basePath, 'data', 'layerTestData.json');
     const inputData = require( inputDataPath );

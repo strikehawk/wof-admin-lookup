@@ -8,13 +8,16 @@ const _ = require('lodash');
 /**
  * LocalPIPService class
  *
- * @param {object} [pipService] optional, primarily used for testing
+ * @param {string} datapath the path to the folder containing the 'sqlite' folder
+ * @param {Array.<string>} layers
+ * @param {string} langKeyThe ISO 3166-1 alpha-3 code of the target language. If no label exist for this language, a fallback value 
+ * will be used
  * @constructor
  */
-function LocalPipService(datapath, layers) {
+function LocalPipService(datapath, layers, langKey) {
   const self = this;
 
-  createPipService(datapath, _.defaultTo(layers, []), false, (err, service) => {
+  createPipService(datapath, _.defaultTo(layers, []), !!langKey, langKey, (err, service) => {
     if (err) {
       throw err;
     }
@@ -25,20 +28,22 @@ function LocalPipService(datapath, layers) {
 /**
  * @param {object} centroid
  * @param {array} search_layers
+ * @param {string} langKey The ISO 3166-1 alpha-3 code of the target language. If no label exist for this language, a fallback value 
+ * will be used
  * @param callback
  */
-LocalPipService.prototype.lookup = function lookup(centroid, search_layers, callback) {
+LocalPipService.prototype.lookup = function lookup(centroid, search_layers, langKey, callback) {
   const self = this;
 
   // in the case that the lookup service hasn't loaded yet, sleep and come back in 5 seconds
   if (!self.pipService) {
     setTimeout(() => {
-      self.lookup(centroid, search_layers, callback);
+      self.lookup(centroid, search_layers, langKey, callback);
     }, 1000 * 5);
     return;
   }
 
-  self.pipService.lookup(centroid.lat, centroid.lon, search_layers, (err, results) => {
+  self.pipService.lookup(centroid.lat, centroid.lon, search_layers, langKey, (err, results) => {
 
     // convert the array to an object keyed on the array element's Placetype field
     const result = results.reduce((obj, elem) => {
@@ -91,10 +96,11 @@ LocalPipService.prototype.end = function end() {
 /**
  * Factory function
  *
- * @param {object} [service]
- * @param {string} [datapath]
+ * @param {string} datapath
+ * @param {Array.<string>} layers
+ * @param {string} langKey
  * @returns {LocalPIPService}
  */
-module.exports = (datapath, layers) => {
-  return new LocalPipService(datapath, layers);
+module.exports = (datapath, layers, langKey) => {
+  return new LocalPipService(datapath, layers, langKey);
 };

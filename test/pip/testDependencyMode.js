@@ -25,7 +25,7 @@ const layers = [
 function test(callback) {
   let startTime = process.hrtime();
 
-  createPIPService(config.imports.whosonfirst.datapath, layers, false, (err, pipService) => {
+  createPIPService(config.imports.whosonfirst.datapath, layers, false, 'eng', (err, pipService) => {
 
     console.log(`Total load time (minutes) = ${(getMicroSeconds(process.hrtime(startTime))/1000000/60)}`);
 

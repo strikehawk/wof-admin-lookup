@@ -7,9 +7,11 @@ const logger = require('pelias-logger').get('wof-pip-service');
  * Return the localized name or default name for the given record
  *
  * @param {object} wofData
+ * @param {string} langKey The ISO 3166-1 alpha-3 code of the target language. If no label exist for this language, a fallback value 
+ * will be used
  * @returns {false|string}
  */
-function getName(wofData) {
+function getName(wofData, langKey) {
 
   // if this is a US county, use the qs:a2_alt for county
   // eg - wof:name = 'Lancaster' and qs:a2_alt = 'Lancaster County', use latter
@@ -17,12 +19,24 @@ function getName(wofData) {
     return getPropertyValue(wofData, 'qs:a2_alt');
   }
 
+  if (!langKey) {
+    // build the preferred lang key to use for name, like 'name:deu_x_preferred'
+    langKey = getOfficialLangName(wofData, [
+      'wof:lang_x_preferred',
+      'wof:lang_x_spoken',
+      'wof:lang_x_official',
+      'wof:lang'
+    ]);
+  }
+
   // attempt to use the following in order of priority and fallback to wof:name if all else fails
-  return getLocalizedName(wofData, 'wof:lang_x_spoken') ||
-         getLocalizedName(wofData, 'wof:lang_x_official') ||
-         getLocalizedName(wofData, 'wof:lang') ||
-         getPropertyValue(wofData, 'wof:label') ||
-         getPropertyValue(wofData, 'wof:name');
+  const result =
+    getLocalizedName(wofData, `label:${langKey}_x_preferred`) ||
+    getLocalizedName(wofData, `name:${langKey}_x_preferred`) ||
+    getPropertyValue(wofData, 'wof:label') ||
+    getPropertyValue(wofData, 'wof:name');
+
+  return result;
 }
 
 // this function is used to verify that a US county QS altname is available
@@ -61,8 +75,7 @@ function getOfficialLangName(wofData, langProperty) {
       wofData.properties['wof:lang_x_official'], languages);
   }
 
-  // for now always just grab the first language in the array
-  return `name:${languages[0]}_x_preferred`;
+  return languages[0];
 }
 
 /**
@@ -84,17 +97,15 @@ function getLocalizedName(wofData, langProperty) {
     !_.isEqual(wofData.properties[langProperty], ['unk']) &&
     !_.isEqual(wofData.properties[langProperty], ['und'])) {
 
-    // build the preferred lang key to use for name, like 'name:deu_x_preferred'
-    var official_lang_key = getOfficialLangName(wofData, langProperty);
 
     // check if that language is available
-    var name = getPropertyValue(wofData, official_lang_key);
+    var name = getPropertyValue(wofData, langProperty);
     if (name) {
       return name;
     }
 
     // if corresponding name property wasn't found, log the error
-    logger.warn(langProperty, '[missing]', official_lang_key, wofData.properties['wof:name'],
+    logger.warn(langProperty, '[missing]', wofData.properties['wof:name'],
       wofData.properties['wof:placetype'], wofData.properties['wof:id']);
   }
   return false;

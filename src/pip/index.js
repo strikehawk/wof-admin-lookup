@@ -37,13 +37,14 @@ const defaultLayers = [
   'ocean'
 ];
 
-module.exports.create = function createPIPService(datapath, layers, localizedAdminNames, callback) {
+module.exports.create = function createPIPService(datapath, layers, localizedAdminNames, langKey, callback) {
   // take the intersection to keep order in decreasing granularity
   // ie - _.intersection([1, 2, 3], [3, 1]) === [1, 3]
   layers = _.intersection(defaultLayers, _.isEmpty(layers) ? defaultLayers : layers);
 
   const folder = path.join(datapath, 'sqlite');
   if (!fs.existsSync(folder)) {
+    console.error(`Could not find sqlite folder: ${folder}`);
     return callback(`unable to locate sqlite folder`);
   }
 
@@ -51,7 +52,7 @@ module.exports.create = function createPIPService(datapath, layers, localizedAdm
 
   // load all workers
   async.forEach(layers, (layer, done) => {
-      startWorker(datapath, layer, localizedAdminNames, function (err, worker) {
+      startWorker(datapath, layer, localizedAdminNames, langKey, function (err, worker) {
         done();
       });
     },
@@ -106,8 +107,8 @@ function killAllWorkers() {
 }
 module.exports.killAllWorkers = killAllWorkers;
 
-function startWorker(datapath, layer, localizedAdminNames, callback) {
-  const worker = childProcess.fork(path.join(__dirname, 'worker'), [layer, datapath, localizedAdminNames]);
+function startWorker(datapath, layer, localizedAdminNames, langKey, callback) {
+  const worker = childProcess.fork(path.join(__dirname, 'worker'), [layer, datapath, localizedAdminNames, langKey]);
   workers[layer] = worker;
 
   worker.on('message', msg => {

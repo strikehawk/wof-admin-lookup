@@ -11,18 +11,32 @@ const getLocalizedName = require('./getLocalizedName');
  * Returns a data object with all fields filled in.
  *
  * @param {boolean} enableLocalizedNames
+ * @param {string} langKey The ISO 3166-1 alpha-3 code of the target language. If no label exist for this language, a fallback value 
+ * will be used
  * @returns {object}
  */
-module.exports.create = function(enableLocalizedNames) {
+module.exports.create = function(enableLocalizedNames, langKey) {
 
   enableLocalizedNames = enableLocalizedNames || false;
+  if (typeof enableLocalizedNames === 'string') {
+    switch (enableLocalizedNames.toLowerCase()) {
+      case 'true':
+        enableLocalizedNames = true;
+        break;
+      case 'false':
+        enableLocalizedNames = false;
+        break;
+      default:
+        enableLocalizedNames = false;
+    }
+  }
 
   // this function extracts the id, name, placetype, hierarchy, and geometry
   return map.obj(function(wofData) {
     const res = {
       properties: {
         Id: wofData.properties['wof:id'],
-        Name: getName(wofData, enableLocalizedNames),
+        Name: getName(wofData, enableLocalizedNames, langKey),
         Placetype: wofData.properties['wof:placetype'],
         Centroid: {
           lat: wofData.properties['geom:latitude'],
@@ -59,11 +73,14 @@ module.exports.create = function(enableLocalizedNames) {
  *
  * @param {object} wofData
  * @param {boolean} enableLocalizedNames
+ * @param {string} langKey The ISO 3166-1 alpha-3 code of the target language. If no label exist for this language, a fallback value 
+ * will be used
  * @returns {boolean|string}
  */
-function getName(wofData, enableLocalizedNames) {
+function getName(wofData, enableLocalizedNames, langKey) {
+  // due to stringify usage 'enableLocalizedNames' might be a string
   if (enableLocalizedNames === true) {
-    return getLocalizedName(wofData);
+    return getLocalizedName(wofData, langKey);
   }
   return getDefaultName(wofData);
 }

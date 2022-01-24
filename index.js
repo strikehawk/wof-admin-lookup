@@ -25,7 +25,8 @@ function resolver(layers) {
 
 function localResolver(layers) {
   const datapath = peliasConfig.imports.whosonfirst.datapath;
-  return require('./src/localPipResolver')(datapath, layers);
+  const langKey = peliasConfig.imports.adminLookup.targetLang;
+  return require('./src/localPipResolver')(datapath, layers, langKey);
 }
 
 module.exports = {

@@ -41,9 +41,11 @@ function readSqliteRecords(datapath, layer) {
  * @param {string} datapath bundle path if string or sqlite or bundle when object
  * @param {string} layer
  * @param {boolean} localizedAdminNames
+ * @param {string} langKey The ISO 3166-1 alpha-3 code of the target language. If no label exist for this language, a fallback value 
+ * will be used
  * @param {function} callback
  */
-function readData(datapath, layer, localizedAdminNames, callback) {
+function readData(datapath, layer, localizedAdminNames, langKey, callback) {
   const features = [];
 
   readSqliteRecords(datapath,layer)
@@ -52,7 +54,7 @@ function readData(datapath, layer, localizedAdminNames, callback) {
     .pipe(filterOutPointRecords.create())
     .pipe(filterOutHierarchylessNeighbourhoods.create())
     .pipe(filterOutCitylessNeighbourhoods.create())
-    .pipe(extractFields.create(localizedAdminNames))
+    .pipe(extractFields.create(localizedAdminNames, langKey))
     .pipe(simplifyGeometry.create())
     .pipe(sink.obj((feature) => {
       features.push(feature);

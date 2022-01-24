@@ -1,8 +1,8 @@
 const _ = require('lodash');
 const parallelTransform = require('parallel-transform');
-const logger = require( 'pelias-logger' ).get( 'wof-admin-lookup' );
-const getAdminLayers = require( './getAdminLayers' );
-const usePostalCity = require( './usePostalCity' );
+const logger = require('pelias-logger').get('wof-admin-lookup');
+const getAdminLayers = require('./getAdminLayers');
+const usePostalCity = require('./usePostalCity');
 
 function hasAnyMultiples(result) {
   return Object.keys(result).some((element) => {
@@ -43,41 +43,50 @@ function createPipResolverStream(pipResolver, config) {
         });
       }
 
-      doc.getParentFields()
-        // filter out placetypes for which there are no values
-        .filter((placetype) => { return !_.isEmpty(result[placetype]); } )
-        // assign parents into the doc
-        .forEach((placetype) => {
-          const values = result[placetype];
-
-          try {
-            // addParent can throw an error if, for example, name is an empty string
-            doc.addParent(placetype, values[0].name, values[0].id.toString(), values[0].abbr);
-
-          }
-          catch (err) {
-            logger.warn('invalid value', {
-              centroid: doc.getCentroid(),
-              result: {
-                type: placetype,
-                values: values
-              }
-            });
-          }
-
-        }
-      );
+      setDocParents(doc, result);
 
       // prefer a 'postal city' locality when a valid postal code is available
       // optionally enable/disable this functionality using config variable.
-      if( config && true === config.usePostalCities ){
-        usePostalCity( result, doc );
+      if (config && true === config.usePostalCities) {
+        usePostalCity(result, doc);
       }
 
       callback(null, doc);
 
     });
   };
+}
+
+function setDocParents(doc, result) {
+  if (!result || !Array.isArray(result)) {
+    return;
+  }
+
+  let placetype;
+  let name;
+  let id;
+  let abbr;
+
+  try {
+    for (const r of result) {
+      placetype = r.Placetype;
+      name = r.Name;
+      id = r.Id.toString();
+      abbr = r.Abbrev;
+
+      // addParent can throw an error if, for example, name is an empty string
+      doc.addParent(placetype, name, id, abbr);
+    }
+  }
+  catch (err) {
+    logger.warn('invalid value', {
+      centroid: doc.getCentroid(),
+      result: {
+        type: placetype,
+        values: result
+      }
+    });
+  }
 }
 
 function createPipResolverEnd(pipResolver) {
@@ -88,7 +97,7 @@ function createPipResolverEnd(pipResolver) {
   };
 }
 
-module.exports = function(pipResolver, config) {
+module.exports = function (pipResolver, config) {
   if (!pipResolver) {
     throw new Error('valid pipResolver required to be passed in as the first parameter');
   }
